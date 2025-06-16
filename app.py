@@ -16,12 +16,15 @@ from transformers import pipeline
 from symspellpy import SymSpell, Verbosity
 # --- SciSpacy for NER ---
 import spacy
+import json
 
 
 
 from dotenv import load_dotenv
 load_dotenv()
 import os
+
+hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
 api_key = os.getenv("TOGETHER_AI_API_KEY")
 credentials_path = os.getenv("GOOGLE_SHEET_CREDENTIALS")
@@ -199,7 +202,9 @@ feedback_path = os.path.join(os.getcwd(), 'feedback.csv')
 # --- Google Sheets setup ---
 def get_google_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scope)
+    creds_dict = json.loads(os.getenv("GOOGLE_SHEET_CREDS_JSON"))
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
     client = gspread.authorize(creds)
     sheet = client.open_by_key(sheet_id).sheet1  # ✅ Secure usage
     return sheet
@@ -254,8 +259,10 @@ def has_already_submitted(participant_id):
 # Load Hugging Face sentiment analysis model (RoBERTa trained on tweets)
 sentiment_pipeline = pipeline(
     "sentiment-analysis",
-    model="cardiffnlp/twitter-roberta-base-sentiment"
+    model="cardiffnlp/twitter-roberta-base-sentiment",
+    token=hf_token  # Secure HuggingFace token usage
 )
+
 
 def analyze_sentiment(comment):
     if not comment.strip():
