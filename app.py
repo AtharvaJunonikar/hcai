@@ -17,7 +17,7 @@ from symspellpy import SymSpell, Verbosity
 # --- SciSpacy for NER ---
 import spacy
 import json
-
+from spacy.cli import download
 
 
 from dotenv import load_dotenv
@@ -70,7 +70,11 @@ def correct_spelling(text):
     return " ".join(corrected_terms)
 
 # --- Initialize SciSpacy NER Model ---
-nlp = spacy.load("en_ner_bc5cdr_md")  # Clinical NER model
+try:
+    nlp_med = spacy.load("en_ner_bc5cdr_md")
+except OSError:
+    download("en_ner_bc5cdr_md")
+    nlp_med = spacy.load("en_ner_bc5cdr_md")
 
 # --- Load your DistilBERT Disease Prediction Model ---
 model_path = "./ml_model/saved_model"
